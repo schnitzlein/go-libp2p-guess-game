@@ -34,7 +34,7 @@ import (
         "encoding/json"
         "io/ioutil"
 
-        "time"
+        //"time"
         //"strings"
         "strconv"
 
@@ -57,32 +57,13 @@ import (
 	"github.com/multiformats/go-multiaddr"
 )
 
+
 // initial starting game config
 func initGame() {
   my_secret_number = createMagicNumber()
 }
 
-func runGame() {
 
-  // todo: game awaiting loop in main
-  // automatic loop in peers for receiving a number
-
-  gameRules()
-  my_secret_number = createMagicNumber()
-  // todo: send magic number one time
-  //reader := bufio.NewReader(os.Stdin)  // todo: add to global var
-                                       // init secret num
-                                       // send to peer
-
-
-  // endless loop
-  for {
-    showMenu( bufio.NewReader(os.Stdin) ) // wait
-  } // for
-}
-//
-// simple game ends
-//
 
 type MainNode struct {
      NodeName, NodeID string
@@ -127,6 +108,27 @@ func readData(rw *bufio.ReadWriter, NodeName string) {
 	}
 }
 
+func readDataPeer(rw *bufio.ReadWriter, NodeName string, wc chan string) {
+        for {
+                str, _ := rw.ReadString('\n')
+
+                if str == "" {
+                        return
+                }
+                if str != "\n" {
+                        // Green console colour:        \x1b[32m
+                        // Reset console colour:        \x1b[0m
+                        fmt.Printf("%s: \x1b[32m%s\x1b[0m> ", NodeName, str)
+                        val := parseInput( str )
+                        retVal := checkInput( val )
+                        fmt.Println(retVal)
+                        wc <- retVal // drop data into channel
+                }
+
+        }
+}
+
+
 func writeData(rw *bufio.ReadWriter, NodeName string) {
 	stdReader := bufio.NewReader(os.Stdin)
 
@@ -144,17 +146,17 @@ func writeData(rw *bufio.ReadWriter, NodeName string) {
 
 }
 
-func writeDataPeer(rw *bufio.ReadWriter, NodeName string) {
-         stdReader := bufio.NewReader(os.Stdin)
+func writeDataPeer(rw *bufio.ReadWriter, NodeName string, c chan string) {
+         //stdReader := bufio.NewReader(os.Stdin)
          for {
 
            // add here the guess function
-           //game.runGame()
+           // check if readerstream got new bytes?
            fmt.Print(NodeName, " > ")
-           var sendData = "after " + string(2) + "secs, "
-           foo, err := stdReader.ReadString('\n')
+           //var sendData = "after " + string(2) + "secs, "
+           //foo, err := stdReader.ReadString('\n')
            // above fills from guesser
-
+/*
            if err != nil {
                panic(err)
            }
@@ -163,8 +165,9 @@ func writeDataPeer(rw *bufio.ReadWriter, NodeName string) {
            // send after Timer fired
            timer1 := time.NewTimer(2 * time.Second)
            <-timer1.C
+*/
 
-
+           sendData := <- c // receive from channel
            rw.WriteString(fmt.Sprintf("%s\n", sendData))
            rw.Flush()
          }
@@ -234,12 +237,13 @@ func main() {
 	_ = ioutil.WriteFile("test.json", file, 0644)
         // testing ends
 
-        // init Config
-        initGame()
+        // channels for go routine communication
+        channel_peer_reader := make(chan string)
+        //channel_peer_reader_notify := make(chan bool)
 
-        gameRules()
 
 	if *dest == "" {
+                // Main Node
 		// Set a function as stream handler.
 		// This function is called when a peer connects, and starts a stream with this protocol.
 		// Only applies on the receiving side.
@@ -258,6 +262,11 @@ func main() {
 			panic("was not able to find actual local port")
 		}
 
+                // init Config + Game Rules
+                initGame()
+                gameRules()
+                fmt.Println("TEST: ",my_secret_number)
+
 		fmt.Printf("Run './chat -d /ip4/127.0.0.1/tcp/%v/p2p/%s' on another console.\n", port, host.ID().Pretty())
 		fmt.Println("You can replace 127.0.0.1 with public IP as well.")
 		fmt.Printf("\nWaiting for incoming connection\n\n")
@@ -265,6 +274,7 @@ func main() {
 		// Hang forever
 		<-make(chan struct{})
 	} else {
+                // Peer Node
 		fmt.Println("This node's multiaddresses:")
 		for _, la := range host.Addrs() {
 			fmt.Printf(" - %v\n", la)
@@ -297,11 +307,14 @@ func main() {
 		// Create a buffered stream so that read and writes are non blocking.
 		rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
 
+                // initial state receiving config/secret
+                go readDataText(rw)
+
 		// Create a thread to read and write data.
 
                 fmt.Println("You are: ",host.ID().Pretty())
-		go writeDataPeer(rw, host.ID().Pretty())
-		go readData(rw, "other")
+		go writeDataPeer(rw, host.ID().Pretty(), channel_peer_reader)
+		go readDataPeer(rw, "other", channel_peer_reader)
 
 		// Hang forever.
 		select {}

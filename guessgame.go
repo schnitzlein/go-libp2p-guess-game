@@ -145,3 +145,17 @@ func writeDataText(rw *bufio.ReadWriter, text string) {
      rw.Flush()
 }
 
+// onetime receiver
+func readDataText(rw *bufio.ReadWriter) {
+     inbound, err := rw.ReadString('\n')
+     if err != nil {
+        panic(err)
+     }
+     if inbound == "" {
+       //ignore
+       return
+     }
+     if inbound != "\n" {
+       fmt.Println("secret: ",inbound)
+     }
+}
