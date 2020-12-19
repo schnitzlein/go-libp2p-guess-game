@@ -33,8 +33,11 @@ package main
 import (
         "encoding/json"
         "io/ioutil"
+        //"guessgame" broken import shit with go everything relativ to online? wtf
 
         "time"
+        "strings"
+        "strconv"
 
 	"bufio"
 	"context"
@@ -54,6 +57,95 @@ import (
 
 	"github.com/multiformats/go-multiaddr"
 )
+
+//
+// simple game beginn
+//
+func gameRules() String{
+  var textblob string = ""
+  textblob += "Guess the correct Number Game"
+  textblob += "---------------------"
+  textblob += "Game Rules: "
+  textblob += "  Guess the correct number by input a number."
+  textblob += "  The number must between 0 and 100."
+  textblob += "  The machine answer only with two indicators."
+  textblob += "  Indicators ::== [ above | below ] "
+  textblob += "  If the number is lower than your current guess,"
+  textblob += "  than the 'below' indicator is shown."
+  textblob += "  Is the number above your current guess,"
+  textblob += "  than the 'above' indicator is shown."
+  textblob += ""
+  textblob += "Control Commands: "
+  textblob += "  exit"
+  textblob += "  help"
+
+}
+
+func isInt(s string) bool {
+    _, err := strconv.ParseInt(s, 10, 64)
+    return err == nil // err == nil means there is no error, so True means is valid Integer
+}
+
+func runGame() {
+  var limit int = 100
+
+  // use always a new Seed
+  rand.Seed( time.Now().UnixNano() )
+  var my_secret_number int = rand.Intn( limit )
+
+  // todo: share this secret and post it to all new peers
+  // todo: awaiting loop in main
+  // automatic loop in peers for receiving a number
+
+  reader := bufio.NewReader(os.Stdin)
+
+  gameRules()
+
+  // endless loop
+  for {
+    fmt.Println("guess a number between 0 and ", limit)
+    fmt.Print("-> ")
+    text, _ := reader.ReadString('\n')
+    // convert CRLF to LF
+    text = strings.Replace(text, "\n", "", -1)
+
+    foo := isInt(text)
+    if foo == true {
+      guess, _ := strconv.Atoi(text)
+
+      if guess < my_secret_number {
+          fmt.Println("above!")
+      } else if guess > my_secret_number {
+          fmt.Println("below!")
+      } else if guess == my_secret_number {
+          fmt.Println("================")
+          fmt.Println("=== success! ===")
+          fmt.Println("================")
+          os.Exit(0)
+      }
+    } else {
+      // This is a text/string
+      switch text  {
+        case "foobar":
+          fmt.Println("foobar yes")
+        case "barfoo":
+          fmt.Println("yes barfoo!")
+        //case "debug":
+        //  fmt.Println("secret", my_secret_number)
+        case "exit":
+          os.Exit(0)
+        case "help":
+          gameRules()
+        default:
+         fmt.Println("something completly different...")
+      }
+    }
+
+  } // for
+}
+//
+// simple game ends
+//
 
 type MainNode struct {
      NodeName, NodeID string
@@ -111,9 +203,11 @@ func writeData(rw *bufio.ReadWriter, NodeName string) {
 func writeDataPeer(rw *bufio.ReadWriter, NodeName string) {
          stdReader := bufio.NewReader(os.Stdin)
          for {
+
            // add here the guess function
+           game.runGame()
            fmt.Print(NodeName, " > ")
-           var sendData = "after 3 secs, "
+           var sendData = "after " + string(2) + "secs, "
            foo, err := stdReader.ReadString('\n')
            // above fills from guesser
 
@@ -123,7 +217,7 @@ func writeDataPeer(rw *bufio.ReadWriter, NodeName string) {
            sendData += foo
 
            // send after Timer fired
-           timer1 := time.NewTimer(3 * time.Second)
+           timer1 := time.NewTimer(2 * time.Second)
            <-timer1.C
 
 
@@ -131,6 +225,7 @@ func writeDataPeer(rw *bufio.ReadWriter, NodeName string) {
            rw.Flush()
          }
 }
+
 
 func main() {
 	sourcePort := flag.Int("sp", 0, "Source port number")
