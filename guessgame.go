@@ -35,6 +35,7 @@ import (
   "time"
   mrand "math/rand"
   "bufio"
+  //"log"
 )
 
 //
@@ -107,9 +108,13 @@ func showMenu(reader *bufio.Reader) string {
 func checkInput(text string) string {
   var answer string = ""
   foo := isInt(text)
+  fmt.Println("DEBUG_text: ",text)
+  fmt.Println("DEBUG: ",foo)
+  fmt.Println("DEBUG_sec: ",my_secret_number)
   // This is a int
   if foo == true {
       guess, _ := strconv.Atoi(text)
+      fmt.Println("DEBUG_guess: ",guess)
       if guess < my_secret_number {
           answer = "above!"
       } else if guess > my_secret_number {
@@ -147,6 +152,7 @@ func writeDataText(rw *bufio.ReadWriter, text string) {
 
 // onetime receiver
 func readDataText(rw *bufio.ReadWriter) {
+  for {
      inbound, err := rw.ReadString('\n')
      if err != nil {
         panic(err)
@@ -156,6 +162,17 @@ func readDataText(rw *bufio.ReadWriter) {
        return
      }
      if inbound != "\n" {
-       fmt.Println("secret: ",inbound)
+       //log.Fatalln("secret: ",inbound)
+       foo := parseInput(inbound)
+       my_secret_number, err = strconv.Atoi(foo)
+       if err != nil {
+          panic(err)
+       }
+       fmt.Println("my_secret: ",my_secret_number)
+       return
      }
+     fmt.Println("here")
+     fmt.Println(inbound)
+  }
+
 }

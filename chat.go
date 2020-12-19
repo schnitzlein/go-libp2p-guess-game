@@ -34,7 +34,7 @@ import (
         "encoding/json"
         "io/ioutil"
 
-        //"time"
+        "time"
         //"strings"
         "strconv"
 
@@ -168,6 +168,7 @@ func writeDataPeer(rw *bufio.ReadWriter, NodeName string, c chan string) {
 */
 
            sendData := <- c // receive from channel
+           fmt.Println(sendData)
            rw.WriteString(fmt.Sprintf("%s\n", sendData))
            rw.Flush()
          }
@@ -309,7 +310,7 @@ func main() {
 
                 // initial state receiving config/secret
                 go readDataText(rw)
-
+                time.Sleep(1 * time.Second)  // dirty solution, use sync with mutex and lock or check if secret != 0
 		// Create a thread to read and write data.
 
                 fmt.Println("You are: ",host.ID().Pretty())
