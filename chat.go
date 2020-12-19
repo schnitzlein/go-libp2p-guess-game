@@ -61,7 +61,7 @@ import (
 //
 // simple game beginn
 //
-func gameRules() String{
+func gameRules() string{
   var textblob string = ""
   textblob += "Guess the correct Number Game"
   textblob += "---------------------"
@@ -78,7 +78,7 @@ func gameRules() String{
   textblob += "Control Commands: "
   textblob += "  exit"
   textblob += "  help"
-
+  return textblob
 }
 
 func isInt(s string) bool {
@@ -90,8 +90,9 @@ func runGame() {
   var limit int = 100
 
   // use always a new Seed
-  rand.Seed( time.Now().UnixNano() )
-  var my_secret_number int = rand.Intn( limit )
+  mrand.Seed( time.Now().UnixNano() )
+  var my_secret_number = mrand.Intn( limit )
+  helloworld("test")
 
   // todo: share this secret and post it to all new peers
   // todo: awaiting loop in main
@@ -205,7 +206,7 @@ func writeDataPeer(rw *bufio.ReadWriter, NodeName string) {
          for {
 
            // add here the guess function
-           game.runGame()
+           //game.runGame()
            fmt.Print(NodeName, " > ")
            var sendData = "after " + string(2) + "secs, "
            foo, err := stdReader.ReadString('\n')
