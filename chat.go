@@ -26,6 +26,8 @@
  * This program demonstrate a simple chat application using p2p communication.
  * With backoff Timer demostration and uses Juan Batiz-Benet Code as Code base from 2014.
  * Thanks to you Juan Batiz-Benet.
+ * Intention here was to use libp2p and transfer the secret or config parameters for a new node.
+ * The game could also or simplier done with a simple socket communication ...
  *
  */
 package main
@@ -121,7 +123,6 @@ func readDataPeer(rw *bufio.ReadWriter, NodeName string, wc chan string) {
                         fmt.Printf("%s: \x1b[32m%s\x1b[0m> ", NodeName, str)
                         val := parseInput( str )
                         retVal := checkInput( val )
-                        fmt.Println(retVal)
                         wc <- retVal // drop data into channel
                 }
 
@@ -147,28 +148,14 @@ func writeData(rw *bufio.ReadWriter, NodeName string) {
 }
 
 func writeDataPeer(rw *bufio.ReadWriter, NodeName string, c chan string) {
-         //stdReader := bufio.NewReader(os.Stdin)
          for {
 
            // add here the guess function
            // check if readerstream got new bytes?
            fmt.Print(NodeName, " > ")
-           //var sendData = "after " + string(2) + "secs, "
-           //foo, err := stdReader.ReadString('\n')
-           // above fills from guesser
-/*
-           if err != nil {
-               panic(err)
-           }
-           sendData += foo
-
-           // send after Timer fired
-           timer1 := time.NewTimer(2 * time.Second)
-           <-timer1.C
-*/
 
            sendData := <- c // receive from channel
-           fmt.Println(sendData)
+           //fmt.Println(sendData)
            rw.WriteString(fmt.Sprintf("%s\n", sendData))
            rw.Flush()
          }
@@ -266,7 +253,7 @@ func main() {
                 // init Config + Game Rules
                 initGame()
                 gameRules()
-                fmt.Println("TEST: ",my_secret_number)
+                //fmt.Println("TEST: ",my_secret_number)
 
 		fmt.Printf("Run './chat -d /ip4/127.0.0.1/tcp/%v/p2p/%s' on another console.\n", port, host.ID().Pretty())
 		fmt.Println("You can replace 127.0.0.1 with public IP as well.")
@@ -311,6 +298,10 @@ func main() {
                 // initial state receiving config/secret
                 go readDataText(rw)
                 time.Sleep(1 * time.Second)  // dirty solution, use sync with mutex and lock or check if secret != 0
+                // better here check if my_secret_number != 0 OR
+                // use mutex with lock and block the time ...
+                // solve the issue that another peer could steal the session
+                // also there is a lot of possiblities to retrieve the secret
 		// Create a thread to read and write data.
 
                 fmt.Println("You are: ",host.ID().Pretty())
