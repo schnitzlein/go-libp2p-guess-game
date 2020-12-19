@@ -44,24 +44,22 @@ import (
 
 var my_secret_number int = 0
 
-func gameRules() string{
-  var textblob string = ""
-  textblob += "Guess the correct Number Game"
-  textblob += "---------------------"
-  textblob += "Game Rules: "
-  textblob += "  Guess the correct number by input a number."
-  textblob += "  The number must between 0 and 100."
-  textblob += "  The machine answer only with two indicators."
-  textblob += "  Indicators ::== [ above | below ] "
-  textblob += "  If the number is lower than your current guess,"
-  textblob += "  than the 'below' indicator is shown."
-  textblob += "  Is the number above your current guess,"
-  textblob += "  than the 'above' indicator is shown."
-  textblob += ""
-  textblob += "Control Commands: "
-  textblob += "  exit"
-  textblob += "  help"
-  return textblob
+func gameRules() {
+  fmt.Println("Guess the correct Number Game")
+  fmt.Println("---------------------")
+  fmt.Println("Game Rules: ")
+  fmt.Println("  Guess the correct number by input a number.")
+  fmt.Println("  The number must between 0 and 100.")
+  fmt.Println("  The machine answer only with two indicators.")
+  fmt.Println("  Indicators ::== [ above | below ] ")
+  fmt.Println("  If the number is lower than your current guess,")
+  fmt.Println("  than the 'below' indicator is shown.")
+  fmt.Println("  Is the number above your current guess,")
+  fmt.Println("  than the 'above' indicator is shown.")
+  fmt.Println("")
+  fmt.Println("Control Commands: ")
+  fmt.Println("  exit")
+  fmt.Println("  help")
 }
 
 func createMagicNumber() int{
@@ -132,7 +130,7 @@ func checkInput(text string) string {
         case "exit":
           os.Exit(0)
         case "help":
-          answer = gameRules()
+          gameRules()
         default:
           answer = "something completly different..."
       }

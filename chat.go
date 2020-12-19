@@ -33,10 +33,9 @@ package main
 import (
         "encoding/json"
         "io/ioutil"
-        //"guessgame" broken import shit with go everything relativ to online? wtf
 
         "time"
-        "strings"
+        //"strings"
         "strconv"
 
 	"bufio"
@@ -58,90 +57,27 @@ import (
 	"github.com/multiformats/go-multiaddr"
 )
 
-//
-// simple game beginn
-//
-func gameRules() string{
-  var textblob string = ""
-  textblob += "Guess the correct Number Game"
-  textblob += "---------------------"
-  textblob += "Game Rules: "
-  textblob += "  Guess the correct number by input a number."
-  textblob += "  The number must between 0 and 100."
-  textblob += "  The machine answer only with two indicators."
-  textblob += "  Indicators ::== [ above | below ] "
-  textblob += "  If the number is lower than your current guess,"
-  textblob += "  than the 'below' indicator is shown."
-  textblob += "  Is the number above your current guess,"
-  textblob += "  than the 'above' indicator is shown."
-  textblob += ""
-  textblob += "Control Commands: "
-  textblob += "  exit"
-  textblob += "  help"
-  return textblob
-}
-
-func isInt(s string) bool {
-    _, err := strconv.ParseInt(s, 10, 64)
-    return err == nil // err == nil means there is no error, so True means is valid Integer
+// initial starting game config
+func initGame() {
+  my_secret_number = createMagicNumber()
 }
 
 func runGame() {
-  var limit int = 100
 
-  // use always a new Seed
-  mrand.Seed( time.Now().UnixNano() )
-  var my_secret_number = mrand.Intn( limit )
-  helloworld("test")
-
-  // todo: share this secret and post it to all new peers
-  // todo: awaiting loop in main
+  // todo: game awaiting loop in main
   // automatic loop in peers for receiving a number
 
-  reader := bufio.NewReader(os.Stdin)
-
   gameRules()
+  my_secret_number = createMagicNumber()
+  // todo: send magic number one time
+  //reader := bufio.NewReader(os.Stdin)  // todo: add to global var
+                                       // init secret num
+                                       // send to peer
+
 
   // endless loop
   for {
-    fmt.Println("guess a number between 0 and ", limit)
-    fmt.Print("-> ")
-    text, _ := reader.ReadString('\n')
-    // convert CRLF to LF
-    text = strings.Replace(text, "\n", "", -1)
-
-    foo := isInt(text)
-    if foo == true {
-      guess, _ := strconv.Atoi(text)
-
-      if guess < my_secret_number {
-          fmt.Println("above!")
-      } else if guess > my_secret_number {
-          fmt.Println("below!")
-      } else if guess == my_secret_number {
-          fmt.Println("================")
-          fmt.Println("=== success! ===")
-          fmt.Println("================")
-          os.Exit(0)
-      }
-    } else {
-      // This is a text/string
-      switch text  {
-        case "foobar":
-          fmt.Println("foobar yes")
-        case "barfoo":
-          fmt.Println("yes barfoo!")
-        //case "debug":
-        //  fmt.Println("secret", my_secret_number)
-        case "exit":
-          os.Exit(0)
-        case "help":
-          gameRules()
-        default:
-         fmt.Println("something completly different...")
-      }
-    }
-
+    showMenu( bufio.NewReader(os.Stdin) ) // wait
   } // for
 }
 //
@@ -160,8 +96,15 @@ func handleStream(s network.Stream) {
 	log.Println("Got a new stream!")
         log.Println(s.Stat())
 
+        // send one time data
+        //rw_init := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
+        //go writeDataText(rw_init, string(my_secret_number))
+
 	// Create a buffer stream for non blocking read and write.
 	rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
+
+        //var mysendstr string = ""+ strconv.Itoa(77)
+        go writeDataText(rw, strconv.Itoa(my_secret_number) )
 
 	go readData(rw, "other")
 	go writeData(rw, "main")
@@ -277,20 +220,24 @@ func main() {
 		panic(err)
 	}
 
-        // my stuff
+        // my stuff with Tests
         data := MainNode {
           NodeName: "MyNodeName",
           NodeID: host.ID().Pretty(),
         }
-        //
+        // testing something ...
         fmt.Println("This is nodeid: ",host.ID().Pretty())
         fmt.Println(data) // useless data
 
         file, _ := json.MarshalIndent(data, "", " ")
 
 	_ = ioutil.WriteFile("test.json", file, 0644)
+        // testing ends
 
-        //
+        // init Config
+        initGame()
+
+        gameRules()
 
 	if *dest == "" {
 		// Set a function as stream handler.
